@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Изучение Священного Корана</title>
   
-  <!-- Иконка для сайта (Favicon + Apple / Android Touch Icon) -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2225%22 fill=%22%231a3c27%22/><text y=%22.9em%22 x=%22.22em%22 font-size=%2275%22 font-family=%22Georgia, serif%22 font-weight=%22bold%22 fill=%22%23d4af37%22>Q</text></svg>">
   <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2225%22 fill=%22%231a3c27%22/><text y=%22.9em%22 x=%22.22em%22 font-size=%2275%22 font-family=%22Georgia, serif%22 font-weight=%22bold%22 fill=%22%23d4af37%22>Q</text></svg>">
 
@@ -21,33 +20,31 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       min-height: 100vh;
       background: linear-gradient(135deg, #0d1b12 0%, #1a3c27 100%);
       color: #f4f4f4;
-      padding: 20px;
+      padding: 30px 20px;
     }
     .header-box {
       text-align: center;
-      margin-bottom: 35px;
+      margin-bottom: 25px;
     }
     .bismillah {
       font-family: 'Amiri', serif;
       font-size: 28px;
       color: #d4af37;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       letter-spacing: 2px;
     }
     h1 {
       font-size: 24px;
       font-weight: 600;
       color: #ffffff;
-      letter-spacing: 0.5px;
     }
     .subtitle {
       font-size: 14px;
       color: #a3c1ad;
-      margin-top: 6px;
+      margin-top: 4px;
     }
     .cards-container {
       display: flex;
@@ -55,6 +52,7 @@
       flex-wrap: wrap;
       justify-content: center;
       max-width: 600px;
+      margin-bottom: 30px;
     }
     .card {
       background: #ffffff;
@@ -129,11 +127,55 @@
     .btn-down:hover {
       background-color: #edf2f7;
     }
+    
+    /* Стили для журнала изменений */
+    .log-container {
+      width: 100%;
+      max-width: 570px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 20px;
+      backdrop-filter: blur(5px);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    .log-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #d4af37;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .log-list {
+      list-style: none;
+      max-height: 200px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 5px;
+    }
+    .log-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    .log-list::-webkit-scrollbar-thumb {
+      background: rgba(212, 175, 55, 0.5);
+      border-radius: 4px;
+    }
+    .log-item {
+      background: rgba(0, 0, 0, 0.25);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #e2e8f0;
+      border-left: 3px solid #d4af37;
+    }
     .status {
-      margin-top: 35px;
+      margin-top: 20px;
       font-size: 13px;
       color: #a3c1ad;
-      letter-spacing: 0.5px;
+      text-align: center;
     }
   </style>
 </head>
@@ -147,73 +189,107 @@
 
   <div class="cards-container" id="controls"></div>
 
-  <div class="status" id="status">Загрузка данных из таблицы...</div>
+  <!-- Блок журнала -->
+  <div class="log-container">
+    <div class="log-title">📖 Журнал достижений</div>
+    <ul class="log-list" id="logList">
+      <li class="log-item">Загрузка истории...</li>
+    </ul>
+  </div>
+
+  <div class="status" id="status">Готово к работе</div>
 
   <script>
-    // 4 новых названия полей
-    const FIELD_NAMES = [
-      "Страницы",
-      "Тахаджуд",
-      "Зикры",
-      "Каза"
-    ];
-
+    const FIELD_NAMES = ["Страницы", "Тахаджуд", "Зикры", "Каза"];
     let numbers = [0, 0, 0, 0];
+    let historyLogs = [];
 
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxRG_uAkap3Bcr_HhyE2f63jMn6Dp7fF-Jb8AxL7ljl9uxUa2HXVkJA6UAOEdoVtKVp/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwYhk6BszCwMtmDhB4CZZJ_wO9gfrjVdMATkJWSE-OM5C4K_vuIZmIJ5pGn0SyYpSpT/exec";
+    let saveTimeout = null;
 
-    // Загрузка 4 значений из таблицы
+    render();
+    loadData();
+
     async function loadData() {
       try {
         const response = await fetch(SCRIPT_URL);
         const result = await response.json();
         if (result.status === "success") {
           numbers = result.values.map(v => (v === "" || v === null ? 0 : Number(v)));
+          if (result.history) {
+            historyLogs = result.history;
+          }
           render();
-          document.getElementById('status').innerText = "✓ Данные загружены из таблицы";
+          document.getElementById('status').innerText = "✓ Синхронизировано с таблицей";
         }
       } catch (err) {
-        document.getElementById('status').innerText = "⚠️ Ошибка загрузки из таблицы";
-        console.error(err);
-        render();
+        console.log("Автономный режим");
       }
     }
 
-    // Сохранение 4 значений в таблицу
-    async function saveData() {
-      document.getElementById('status').innerText = "Сохранение в таблицу...";
-      try {
-        await fetch(SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ values: numbers })
-        });
-        document.getElementById('status').innerText = "✓ Сохранено в таблицу";
-      } catch (err) {
-        document.getElementById('status').innerText = "⚠️ Ошибка сохранения";
-        console.error(err);
+    function syncToSheet(logText = null) {
+      document.getElementById('status').innerText = "Сохранение...";
+      
+      const payload = { values: numbers };
+      if (logText) {
+        payload.logEntry = logText;
+        historyLogs.unshift(logText); // Добавляем наверх локально
+        renderLog();
       }
+
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).then(() => {
+        document.getElementById('status').innerText = "✓ Сохранено в таблицу";
+      }).catch(err => {
+        document.getElementById('status').innerText = "⚠️ Ошибка отправки";
+      });
+    }
+
+    function getFormattedDate() {
+      const now = new Date();
+      const options = { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
+      return now.toLocaleDateString('ru-RU', options);
     }
 
     function changeValue(index, delta) {
       numbers[index] = Math.max(0, numbers[index] + delta);
       
       const inputEl = document.getElementById(`input-${index}`);
-      if (inputEl) {
-        inputEl.value = numbers[index];
-      }
-      
-      saveData();
+      if (inputEl) inputEl.value = numbers[index];
+
+      const sign = delta > 0 ? `+${delta}` : delta;
+      const logText = `${getFormattedDate()}: ${FIELD_NAMES[index]} ${sign}`;
+
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => syncToSheet(logText), 1000);
     }
 
     function handleInput(index, value) {
       let parsed = parseInt(value);
-      if (isNaN(parsed) || parsed < 0) {
-        parsed = 0;
-      }
+      if (isNaN(parsed) || parsed < 0) parsed = 0;
+      
+      const diff = parsed - numbers[index];
+      if (diff === 0) return;
+
       numbers[index] = parsed;
-      saveData();
+      const sign = diff > 0 ? `+${diff}` : diff;
+      const logText = `${getFormattedDate()}: ${FIELD_NAMES[index]} установленое (${sign >= 0 ? '+' + sign : sign})`;
+
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => syncToSheet(logText), 1000);
+    }
+
+    function renderLog() {
+      const logList = document.getElementById('logList');
+      if (historyLogs.length === 0) {
+        logList.innerHTML = `<li class="log-item">Пока нет записей. Начните изменять цифры!</li>`;
+        return;
+      }
+      logList.innerHTML = historyLogs.map(item => `<li class="log-item">${item}</li>`).join('');
     }
 
     function render() {
@@ -231,9 +307,9 @@
         `;
         container.appendChild(card);
       });
-    }
 
-    loadData();
+      renderLog();
+    }
   </script>
 </body>
 </html>
