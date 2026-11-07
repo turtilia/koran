@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Изучение Священного Корана</title>
+  
+  <!-- Иконка для сайта (Favicon + Apple / Android Touch Icon) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2225%22 fill=%22%231a3c27%22/><text y=%22.9em%22 x=%22.22em%22 font-size=%2275%22 font-family=%22Georgia, serif%22 font-weight=%22bold%22 fill=%22%23d4af37%22>Q</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2225%22 fill=%22%231a3c27%22/><text y=%22.9em%22 x=%22.22em%22 font-size=%2275%22 font-family=%22Georgia, serif%22 font-weight=%22bold%22 fill=%22%23d4af37%22>Q</text></svg>">
+
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * {
@@ -49,7 +54,7 @@
       gap: 16px;
       flex-wrap: wrap;
       justify-content: center;
-      max-width: 750px;
+      max-width: 600px;
     }
     .card {
       background: #ffffff;
@@ -59,11 +64,11 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 125px;
+      width: 130px;
       border-top: 4px solid #d4af37;
     }
     .card-title {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 600;
       color: #2c3e50;
       margin-bottom: 12px;
@@ -145,43 +150,42 @@
   <div class="status" id="status">Загрузка данных из таблицы...</div>
 
   <script>
+    // 4 новых названия полей
     const FIELD_NAMES = [
-      "Выучено сур",
-      "Страниц",
-      "Повторений",
-      "Джузов",
-      "Баллы / Дни"
+      "Страницы",
+      "Тахаджуд",
+      "Зикры",
+      "Каза"
     ];
 
-    let numbers = [0, 0, 0, 0, 0];
+    let numbers = [0, 0, 0, 0];
 
-    // ВСТАВЬ СЮДА СКОПИРОВАННУЮ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT:
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwRJnx4x7t_9JtG8JsdDxkoBmNzg76VHOqP6tk2EBl7aqMxJEVQ-UJ-Rhml-ukoVaT6/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxRG_uAkap3Bcr_HhyE2f63jMn6Dp7fF-Jb8AxL7ljl9uxUa2HXVkJA6UAOEdoVtKVp/exec";
 
-    // Загрузка данных из Google Таблицы при открытии сайта
+    // Загрузка 4 значений из таблицы
     async function loadData() {
       try {
         const response = await fetch(SCRIPT_URL);
         const result = await response.json();
         if (result.status === "success") {
-          numbers = result.values.map(Number);
+          numbers = result.values.map(v => (v === "" || v === null ? 0 : Number(v)));
           render();
           document.getElementById('status').innerText = "✓ Данные загружены из таблицы";
         }
       } catch (err) {
         document.getElementById('status').innerText = "⚠️ Ошибка загрузки из таблицы";
         console.error(err);
-        render(); // Показываем нули, если нет интернета
+        render();
       }
     }
 
-    // Сохранение данных в Google Таблицу при изменении
+    // Сохранение 4 значений в таблицу
     async function saveData() {
       document.getElementById('status').innerText = "Сохранение в таблицу...";
       try {
         await fetch(SCRIPT_URL, {
           method: "POST",
-          mode: "no-cors", // Важно для обхода блокировок браузера при отправке в Google
+          mode: "no-cors",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ values: numbers })
         });
@@ -192,7 +196,6 @@
       }
     }
 
-    // Изменение кнопками (+1 или -1)
     function changeValue(index, delta) {
       numbers[index] = Math.max(0, numbers[index] + delta);
       
@@ -204,7 +207,6 @@
       saveData();
     }
 
-    // Обновление при вводе цифры вручную
     function handleInput(index, value) {
       let parsed = parseInt(value);
       if (isNaN(parsed) || parsed < 0) {
@@ -231,7 +233,6 @@
       });
     }
 
-    // Запускаем загрузку при старте страницы
     loadData();
   </script>
 </body>
